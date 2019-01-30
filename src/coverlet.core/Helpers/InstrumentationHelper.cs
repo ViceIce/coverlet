@@ -61,24 +61,33 @@ namespace Coverlet.Core.Helpers
 
         public static bool HasPdb(string module)
         {
-            using (var moduleStream = File.OpenRead(module))
-            using (var peReader = new PEReader(moduleStream))
+            try
             {
-                foreach (var entry in peReader.ReadDebugDirectory())
+                using (var moduleStream = File.OpenRead(module))
+                using (var peReader = new PEReader(moduleStream))
                 {
-                    if (entry.Type == DebugDirectoryEntryType.CodeView)
+                    foreach (var entry in peReader.ReadDebugDirectory())
                     {
-                        var codeViewData = peReader.ReadCodeViewDebugDirectoryData(entry);
-                        if (codeViewData.Path == $"{Path.GetFileNameWithoutExtension(module)}.pdb")
+                        if (entry.Type == DebugDirectoryEntryType.CodeView)
                         {
-                            // PDB is embedded
-                            return true;
+                            var codeViewData = peReader.ReadCodeViewDebugDirectoryData(entry);
+                            if (codeViewData.Path == $"{Path.GetFileNameWithoutExtension(module)}.pdb")
+                            {
+                                // PDB is embedded
+                                return true;
+                            }
+
+                            return File.Exists(codeViewData.Path);
                         }
-
-                        return File.Exists(codeViewData.Path);
                     }
-                }
 
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error reading module: {module}");
+                Console.Error.WriteLine(ex);
                 return false;
             }
         }
@@ -332,4 +341,3 @@ namespace Coverlet.Core.Helpers
         }
     }
 }
-

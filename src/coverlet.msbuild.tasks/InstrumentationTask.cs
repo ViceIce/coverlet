@@ -86,6 +86,7 @@ namespace Coverlet.MSbuild.Tasks
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex);
                 Log.LogErrorFromException(ex);
                 return false;
             }
